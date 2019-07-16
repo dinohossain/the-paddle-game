@@ -1,0 +1,181 @@
+<html>
+<title>Paddle</title>
+<link href="layout.css" rel="stylesheet" type="text/css">
+<link rel="icon" href="favicon.ico">
+
+<body>
+<strong>The Paddle game</strong><br><br><br>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+var canvas;
+var canvasContext;
+var ballX = 50;//Horizontal position
+var ballY = 50;//Vertical position
+var ballSpeedX = 5;
+var ballSpeedY = 2;
+
+var paddleLeftY = 250; //y position of the paddle left at the start
+var paddleRightY = 250; //y position of the paddle right at the start
+var paddleHeight = 100;
+const PADDLE_THICKNESS = 10;
+
+var playerLeftScore = 0;
+var playerRightScore = 0;
+const SCORE_LIMIT = 10;
+
+var winScreen = false;
+
+function calculateMousePos(evt) {
+	var rect = canvas.getBoundingClientRect(); //black rectangle
+	var root = document.documentElement;
+	var mouseX = evt.clientX - rect.left - root.scrollLeft;//x coordinate of the mouse within the canvas
+	var mouseY = evt.clientY - rect.top - root.scrollTop;//y coordinate of the mouse within the canvas
+	return {
+		x:mouseX,
+		y:mouseY
+	};//Keeping the x and y value together
+}
+
+function handleMouseClick(evt) {
+	if(winScreen) {
+		playerRightScore = 0;
+		playerLeftScore = 0;
+		winScreen = false;
+	}
+}
+
+window.onload = function() {
+	canvas = document.getElementById('gameCanvas');
+	canvasContext = canvas.getContext('2d');
+
+	var FPS = 60;
+	//Every 5 millisecs functions get called
+	setInterval(function() {
+		move();
+		draw();
+	}, 1000/FPS); //= 1sec/60
+
+	canvas.addEventListener('mousemove', //If mousemove, the function gets called
+		function(evt) {
+			var mousePos = calculateMousePos(evt);
+			paddleLeftY = mousePos.y-(paddleHeight/2);
+			//Updating the y position with the mouse one adn centering the cursor
+
+	 canvas.addEventListener('mousedown',handleMouseClick);
+		});
+}
+
+function computerMovement() {//Right paddle movement
+		var paddleRightYCenter = paddleRightY + (paddleHeight/2);
+		if(paddleRightYCenter < ballY-35) {
+		   paddleRightY += 5;//move up
+		} else if(paddleRightYCenter > ballY+35){
+		   paddleRightY -= 5;//move down
+		}
+}
+
+function move() {
+	if(winScreen) {//== true
+		return;
+	}
+	computerMovement();
+
+	ballX += ballSpeedX; //x+5px
+	ballY += ballSpeedY; //y+2px
+
+		if(ballX > canvas.width) {
+			if(ballY > paddleRightY && ballY < paddleRightY+paddleHeight) {
+				ballSpeedX = -ballSpeedX;
+
+				var differenceY = ballY - (paddleRight+paddleHeight/2);//Ball's vertical position -
+				ballSpeedY = differenceY * 0.1;//ball control
+				   } else {
+					 playerLeftScore++;//+1
+				   ballReset();
+				   }
+		}
+
+		if(ballX < 0) {
+			if(ballY > paddleLeftY && ballY < paddleLeftY+paddleHeight) {
+				ballSpeedX = -ballSpeedX;
+
+				var differenceY = ballY - (paddleLeftY+paddleHeight/2);//Ball's vertical position -
+				ballSpeedY = differenceY * 0.1;
+				   } else {
+
+				   playerRightScore++; //Must be before reset
+					 ballReset();
+				   }
+		}
+
+		if(ballY > canvas.height) {
+			ballSpeedY = -ballSpeedY; //If y position > canvas
+		}
+		if(ballY < 0) {
+			ballSpeedY = -ballSpeedY; //If y position < canvas
+		}
+}
+
+function drawNet() {//Net
+	for(var i=0; i<canvas.height; i+=40) {
+		colorRect(canvas.width/2,i,2,20,'white');//x/2,i,2px thick, 20px long
+		}
+}
+
+
+function draw() {
+	colorRect(0,0,canvas.width,canvas.height,'black'); //canvas properties
+	canvasContext.fillStyle = 'white'; //Message text colour
+
+	if(winScreen) {//Winning screen
+		if(playerLeftScore >= SCORE_LIMIT) {
+			canvasContext.fillText("Left player won", canvas.width/2,canvas.height/2);
+		} else if(playerRightScore >= SCORE_LIMIT) {
+				canvasContext.fillText("Right player won", canvas.width/2,canvas.height/2);
+		}
+		canvasContext.fillText("Click to continue!", 400,400);
+		return;//==true - The code under won't even load
+	}
+
+	drawNet();
+	//Left paddle
+	colorRect(0,paddleLeftY,PADDLE_THICKNESS,paddleHeight, 'white');
+	//Right paddle
+	colorRect(canvas.width-PADDLE_THICKNESS,paddleRightY,PADDLE_THICKNESS,paddleHeight,'white');//Right border-thickness(10px)
+	//Ball
+	colorCircle(ballX, ballY, 10, 'white');
+
+	//Score
+	canvasContext.fillText(playerLeftScore, 100,100);//Message, x, y position
+	canvasContext.fillText(playerRightScore, canvas.width-100,100);//Message, x, y position
+}
+
+function ballReset() {//Reset ball position
+	if(playerLeftScore >= SCORE_LIMIT || playerRightScore >= SCORE_LIMIT) {//Or - either one
+		winScreen = true;
+	}
+
+	ballSpeedX = -ballSpeedX; //If x position < canvas
+	ballX = canvas.width/2;
+	ballY = canvas.height/2;
+}
+
+
+//Function that puts color and position-size together
+function colorRect(leftX, topY, width, height, drawColor) {
+	canvasContext.fillStyle = drawColor;
+	canvasContext.fillRect(leftX, topY, width, height);
+}
+
+function colorCircle(centerX,centerY,radius, drawColor) {
+	canvasContext.fillStyle = drawColor;
+	canvasContext.beginPath();
+	//x center of the circle, y, radius, circle formula, clockwise
+	canvasContext.arc(centerX,centerY,radius,0,Math.PI*2, true);
+	canvasContext.fill();
+}
+
+</script>
+</body>
+</html>
